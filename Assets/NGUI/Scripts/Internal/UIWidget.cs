@@ -1424,6 +1424,7 @@ public class UIWidget : UIRect
 	/// Update the widget and fill its geometry if necessary. Returns whether something was changed.
 	/// </summary>
 
+    // WG 这里只更新数据（顶点,uv,颜色）
 	public bool UpdateGeometry (int frame)
 	{
 		// Has the alpha changed?

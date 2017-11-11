@@ -8,6 +8,8 @@ using UnityEngine;
 /// <summary>
 /// Abstract UI rectangle containing functionality common to both panels and widgets.
 /// A UI rectangle contains 4 anchor points (one for each side), and it ensures that they are updated in the proper order.
+/// 包含两个面板和小部件通用的功能的UI矩形。
+/// UI矩形包含4个锚点（每个边都有一个），并确保它们按照适当的顺序更新。
 /// </summary>
 
 public abstract class UIRect : MonoBehaviour
@@ -15,15 +17,15 @@ public abstract class UIRect : MonoBehaviour
 	[System.Serializable]
 	public class AnchorPoint
 	{
-		public Transform target;
-		public float relative = 0f;
-		public int absolute = 0;
+		public Transform target;        // 锚点目标点
+		public float relative = 0f;     // 相对距离比例
+		public int absolute = 0;        // 锚点和目标的边距离
 
 		[System.NonSerialized]
-		public UIRect rect;
+		public UIRect rect;             // 目标的rect组件
 
 		[System.NonSerialized]
-		public Camera targetCam;
+		public Camera targetCam;        // 目标相机
 
 		public AnchorPoint () { }
 		public AnchorPoint (float relative) { this.relative = relative; }
@@ -113,7 +115,7 @@ public abstract class UIRect : MonoBehaviour
 		/// <summary>
 		/// Convenience function that returns the sides the anchored point is anchored to.
 		/// </summary>
-
+        // 获得目标变相对于当前的局部矩形范围
 		public Vector3[] GetSides (Transform relativeTo)
 		{
 			if (target != null)

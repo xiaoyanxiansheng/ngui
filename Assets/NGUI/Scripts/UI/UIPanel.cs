@@ -18,7 +18,7 @@ public class UIPanel : UIRect
 	/// List of active panels.
 	/// </summary>
 
-	static public List<UIPanel> list = new List<UIPanel>();
+	static public List<UIPanel> list = new List<UIPanel>(); // 保存所有的panel
 
 	public enum RenderQueue
 	{
@@ -85,14 +85,14 @@ public class UIPanel : UIRect
 	/// so that the geometry is drawn in the proper order. You can alter this behaviour.
 	/// </summary>
 
-	public RenderQueue renderQueue = RenderQueue.Automatic;
+	public RenderQueue renderQueue = RenderQueue.Automatic; // 渲染次序类型
 
 	/// <summary>
 	/// Render queue used by the panel. The default value of '3000' is the equivalent of "Transparent".
 	/// This property is only used if 'renderQueue' is set to something other than "Automatic".
 	/// </summary>
 
-	public int startingRenderQueue = 3000;
+	public int startingRenderQueue = 3000; // 渲染顺序值
 
 	/// <summary>
 	/// Sorting layer used by the panel -- used when mixing NGUI with the Unity's 2D system.
@@ -123,14 +123,14 @@ public class UIPanel : UIRect
 	/// </summary>
 
 	[System.NonSerialized]
-	public List<UIWidget> widgets = new List<UIWidget>();
+	public List<UIWidget> widgets = new List<UIWidget>(); // 当前panel的所有widget
 
 	/// <summary>
 	/// List of draw calls created by this panel. Do not attempt to modify this list yourself.
 	/// </summary>
 
 	[System.NonSerialized]
-	public List<UIDrawCall> drawCalls = new List<UIDrawCall>();
+	public List<UIDrawCall> drawCalls = new List<UIDrawCall>(); // 当前panel的所有darwCall
 
 	/// <summary>
 	/// Matrix that will transform the specified world coordinates to relative-to-panel coordinates.
@@ -164,12 +164,12 @@ public class UIPanel : UIRect
 	[HideInInspector][SerializeField] UIDrawCall.Clipping mClipping = UIDrawCall.Clipping.None;
 	[HideInInspector][SerializeField] Vector4 mClipRange = new Vector4(0f, 0f, 300f, 200f);
 	[HideInInspector][SerializeField] Vector2 mClipSoftness = new Vector2(4f, 4f);
-	[HideInInspector][SerializeField] int mDepth = 0;
-	[HideInInspector][SerializeField] int mSortingOrder = 0;
+	[HideInInspector][SerializeField] int mDepth = 0; // 深度
+	[HideInInspector][SerializeField] int mSortingOrder = 0; // 队列排序值
 	[HideInInspector][SerializeField] string mSortingLayerName = null;
 
 	// Whether a full rebuild of geometry buffers is required
-	bool mRebuild = false;
+    bool mRebuild = false; // 重要属性 如果为true需要重构所有的DrawCall. Panel中的OnEnable,RemoveWidget,AddWidget等这几个方法和改变Widget深度会设置mRebuild为true
 	bool mResized = false;
 
 	[SerializeField] Vector2 mClipOffset = Vector2.zero;
@@ -1206,6 +1206,7 @@ public class UIPanel : UIRect
 
 	/// <summary>
 	/// Update all panels and draw calls.
+    /// 更新所有Panel和DrawCall
 	/// </summary>
 
 	void LateUpdate ()
@@ -1219,28 +1220,33 @@ public class UIPanel : UIRect
 			mUpdateFrame = Time.frameCount;
 
 			// Update each panel in order
+            // 按顺序更新每一个Panel
 			for (int i = 0, imax = list.Count; i < imax; ++i)
 				list[i].UpdateSelf();
 
 			int rq = 3000;
 
 			// Update all draw calls, making them draw in the right order
+            // 更新所有的drawCall 按正确的顺序绘制
 			for (int i = 0, imax = list.Count; i < imax; ++i)
 			{
 				UIPanel p = list[i];
 
+                // 从下往上
 				if (p.renderQueue == RenderQueue.Automatic)
 				{
 					p.startingRenderQueue = rq;
 					p.UpdateDrawCalls();
 					rq += p.drawCalls.Count;
 				}
+                // 渲染顺序值为默认值3000 下一个从3000+ p.drawCalls.Count 开始
 				else if (p.renderQueue == RenderQueue.StartAt)
 				{
 					p.UpdateDrawCalls();
 					if (p.drawCalls.Count != 0)
 						rq = Mathf.Max(rq, p.startingRenderQueue + p.drawCalls.Count);
 				}
+                // 下一个从startingRenderQueue + 1开始
 				else // Explicit
 				{
 					p.UpdateDrawCalls();
@@ -1261,9 +1267,11 @@ public class UIPanel : UIRect
 	void UpdateSelf ()
 	{
 		mHasMoved = cachedTransform.hasChanged;
-
+        // 更新矩阵变化
 		UpdateTransformMatrix();
+        // 更新所有层
 		UpdateLayers();
+        // 更新所有widget 负责计算
 		UpdateWidgets();
 
 		if (mRebuild)
@@ -1276,7 +1284,7 @@ public class UIPanel : UIRect
 			for (int i = 0; i < drawCalls.Count; )
 			{
 				UIDrawCall dc = drawCalls[i];
-
+                // 标记删除 或者 找不到任何widget使用DrawCall 就销毁这个DrawCall
 				if (dc.isDirty && !FillDrawCall(dc))
 				{
 					UIDrawCall.Destroy(dc);
@@ -1313,6 +1321,8 @@ public class UIPanel : UIRect
 
 	/// <summary>
 	/// Fill the geometry fully, processing all widgets and re-creating all draw calls.
+    /// 重建所有的DrawCall，步骤:先清空所有的DrawCall 再创建所有Widget的DrawCall, 将Widget顶点填充到DrawCall,执行DrawCall绘制
+    /// Material,Texture,Shader都相同而且Widget的层次相同或相邻的话DrawCall会合并
 	/// </summary>
 
 	void FillAllDrawCalls ()
@@ -1531,6 +1541,8 @@ public class UIPanel : UIRect
 	void UpdateLayers ()
 	{
 		// Always move widgets to the panel's layer
+        // 判断当前的层 是否跟GameObject的层一致 (可以在Inspector里设置)
+        // 如果不一致则设置到GameObject所在的层 Panel下所有的Widget也设置到该层
 		if (mLayer != cachedGameObject.layer)
 		{
 			mLayer = mGo.layer;
@@ -1552,6 +1564,7 @@ public class UIPanel : UIRect
 
 	/// <summary>
 	/// Update all of the widgets belonging to this panel.
+    /// 更新所有属于这个Panel的Widget
 	/// </summary>
 
 	void UpdateWidgets()
@@ -1630,6 +1643,7 @@ public class UIPanel : UIRect
 				}
 				
 				// Update the widget's geometry if necessary
+                // 更新Widget的顶点信息 在这篇NGUI源码分析(二) UIWidget文章提到过UpdateGeometry这个方法
 				if (w.UpdateGeometry(frame))
 				{
 					changed = true;

@@ -94,7 +94,9 @@ public class UISlider : UIProgressBar
 #else
 		GameObject bg = (mBG != null && (mBG.GetComponent<Collider>() != null || mBG.GetComponent<Collider2D>() != null)) ? mBG.gameObject : gameObject;
 		UIEventListener bgl = UIEventListener.Get(bg);
+        // 监听按下
 		bgl.onPress += OnPressBackground;
+        // 监听拖拽
 		bgl.onDrag += OnDragBackground;
 
 		if (thumb != null && (thumb.GetComponent<Collider>() != null || thumb.GetComponent<Collider2D>() != null) && (mFG == null || thumb != mFG.cachedTransform))
@@ -113,8 +115,11 @@ public class UISlider : UIProgressBar
 	protected void OnPressBackground (GameObject go, bool isPressed)
 	{
 		if (UICamera.currentScheme == UICamera.ControlScheme.Controller) return;
+        // 获取当前相机
 		mCam = UICamera.currentCamera;
+        // 通过屏幕点击位置获得进度百分比
 		value = ScreenToValue(UICamera.lastEventPosition);
+        // 拖拽结束回调
 		if (!isPressed && onDragFinished != null) onDragFinished();
 	}
 

@@ -416,6 +416,7 @@ public class UIDrawCall : MonoBehaviour
 		// Safety check to ensure we get valid values
 		if (count > 0 && (count == uvs.size && count == cols.size) && (count % 4) == 0)
 		{
+            // WG 
 			// Cache all components
 			if (mFilter == null) mFilter = gameObject.GetComponent<MeshFilter>();
 			if (mFilter == null) mFilter = gameObject.AddComponent<MeshFilter>();
@@ -426,6 +427,7 @@ public class UIDrawCall : MonoBehaviour
 				int indexCount = (count >> 1) * 3;
 				bool setIndices = (mIndices == null || mIndices.Length != indexCount);
 
+                // WG 
 				// Create the mesh
 				if (mMesh == null)
 				{
@@ -451,7 +453,8 @@ public class UIDrawCall : MonoBehaviour
 #if !UNITY_ANDROID
 				// If the number of vertices in the buffer is less than half of the full buffer, trim it
 				if (!trim && (verts.size << 1) < verts.buffer.Length) trim = true;
-#endif
+#endif          
+                // WG 
 				mTriangles = (verts.size >> 1);
 
 				if (trim || verts.buffer.Length > 65000)
@@ -463,6 +466,7 @@ public class UIDrawCall : MonoBehaviour
 					}
 
 					mMesh.vertices = verts.ToArray();
+                    // WG TODO
 					mMesh.uv = uvs.ToArray();
 					mMesh.colors = cols.ToArray();
 

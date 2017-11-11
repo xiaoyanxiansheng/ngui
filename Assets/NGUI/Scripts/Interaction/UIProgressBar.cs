@@ -42,9 +42,9 @@ public class UIProgressBar : UIWidgetContainer
 
 	public Transform thumb;
 
-	[HideInInspector][SerializeField] protected UIWidget mBG;
-	[HideInInspector][SerializeField] protected UIWidget mFG;
-	[HideInInspector][SerializeField] protected float mValue = 1f;
+	[HideInInspector][SerializeField] protected UIWidget mBG; // 背景
+	[HideInInspector][SerializeField] protected UIWidget mFG; // 前景
+	[HideInInspector][SerializeField] protected float mValue = 1f; // 进度百分比
 	[HideInInspector][SerializeField] protected FillDirection mFill = FillDirection.LeftToRight;
 
 	[System.NonSerialized] protected bool mStarted = false;
@@ -57,7 +57,7 @@ public class UIProgressBar : UIWidgetContainer
 	/// Number of steps the slider should be divided into. For example 5 means possible values of 0, 0.25, 0.5, 0.75, and 1.0.
 	/// </summary>
 
-	public int numberOfSteps = 0;
+    public int numberOfSteps = 0; //步长 如果为5 意思是滑动条分为5步,每一步的百分比分别为0, 0.25, 0.5, 0.75, 1.0.
 
 	/// <summary>
 	/// Callbacks triggered when the scroll bar's value changes.
@@ -321,35 +321,44 @@ public class UIProgressBar : UIWidgetContainer
 	{
 		// Create a plane
 		Transform trans = cachedTransform;
+        // 以当前Slider对象为基点 以屏幕向外为法线 创建一个平面
 		Plane plane = new Plane(trans.rotation * Vector3.back, trans.position);
 
 		// If the ray doesn't hit the plane, do nothing
 		float dist;
+        // 以屏幕点击的位置为起始 生成一条射线
 		Ray ray = cachedCamera.ScreenPointToRay(screenPos);
 		if (!plane.Raycast(ray, out dist)) return value;
 
 		// Transform the point from world space to local space
+        //如果穿过平面,先用ray.GetPoint(dist)获得射线与平面的相交点 再通过InverseTransformPoint方法把相交点从世界坐标系转换为局部坐标
+        //最后通过这个局部坐标获得进度百分比值
 		return LocalToValue(trans.InverseTransformPoint(ray.GetPoint(dist)));
 	}
 
 	/// <summary>
 	/// Calculate the value of the progress bar given the specified local position.
+    /// 通过局部坐标计算出进度百分比值
 	/// </summary>
 
 	protected virtual float LocalToValue (Vector2 localPos)
 	{
 		if (mFG != null)
 		{
+            //获得局部矩形顶点
 			Vector3[] corners = mFG.localCorners;
+            //用右上点-左上点计算出尺寸
 			Vector3 size = (corners[2] - corners[0]);
 
 			if (isHorizontal)
 			{
+                //(点击位置 -  左边x坐标) / 宽度
 				float diff = (localPos.x - corners[0].x) / size.x;
 				return isInverted ? 1f - diff : diff;
 			}
 			else
 			{
+                //(点击位置 -  左下Y坐标) / 高度
 				float diff = (localPos.y - corners[0].y) / size.y;
 				return isInverted ? 1f - diff : diff;
 			}
@@ -359,6 +368,7 @@ public class UIProgressBar : UIWidgetContainer
 
 	/// <summary>
 	/// Update the value of the scroll bar.
+    /// 根据Value更新滑条
 	/// </summary>
 
 	public virtual void ForceUpdate ()
@@ -368,10 +378,12 @@ public class UIProgressBar : UIWidgetContainer
 
 		if (mFG != null)
 		{
+            // 获得前景Sprite
 			UIBasicSprite sprite = mFG as UIBasicSprite;
 
 			if (isHorizontal)
 			{
+                // 如果类型是填充类型
 				if (sprite != null && sprite.type == UIBasicSprite.Type.Filled)
 				{
 					if (sprite.fillDirection == UIBasicSprite.FillDirection.Horizontal ||
@@ -380,10 +392,12 @@ public class UIProgressBar : UIWidgetContainer
 						sprite.fillDirection = UIBasicSprite.FillDirection.Horizontal;
 						sprite.invert = isInverted;
 					}
+                    // 设置前景Sprite填充百分比
 					sprite.fillAmount = value;
 				}
 				else
 				{
+                    // 设置前景Sprite 显示区域
 					mFG.drawRegion = isInverted ?
 						new Vector4(1f - value, 0f, 1f, 1f) :
 						new Vector4(0f, 0f, value, 1f);
